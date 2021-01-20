@@ -38,10 +38,10 @@ function postItemForAuction() {
     .then(({ item, category, bid }) => {
       connection.query(
         `INSERT INTO auctions (item, category, bid)
-              VALUES (?, ?, ?);`, [item, category, bid],
+              VALUES (?, ?, ?);`,
+        [item, category, bid],
         (err, data) => {
           if (err) throw err;
-          console.log(data);
           init();
         }
       );
@@ -49,7 +49,54 @@ function postItemForAuction() {
 }
 
 function bidOnItem() {
-  connection.query("SELECT * FROM auctions", (err, data))
+  connection.query("SELECT * FROM auctions", (err, data) => {
+    if (err) throw err;
+    const arrayOfItems = data.map((item) => {
+      return { item: item.item, value: item.id };
+    });
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          name: "selection",
+          message: "Which item would you like to bid on?",
+          choices: arrayOfItems,
+        },
+        {
+          type: "input",
+          name: "newBid",
+          message: "How much would you like to bid?",
+        },
+      ])
+      .then(({ newBid, selection }) => {
+        console.log(selection);
+        console.log(newBid);
+        for (let i = 0; i < data.length; i++) {
+          if (data[i].id === selection) {
+            console.log("Current Bid: ", data[i].bid);
+            console.log("Your Bid: ", newBid);
+            if (data[i].bid < newBid) {
+              // Update the item
+              console.log("Your bid is good!");
+              connection.query(
+                "UPDATE auctions SET bid = ? WHERE id = ?;",
+                [newBid, selection],
+                (err, data) => {
+                  if (err) throw err;
+                  console.log("Your bid was successfully registered!");
+                  init();
+                }
+              );
+            } else {
+              // Alert the user that their bid is not sufficient
+              console.log("Your bid is too low!");
+              init();
+            }
+            break;
+          }
+        }
+      });
+  });
 }
 
 function init() {
@@ -65,7 +112,7 @@ function init() {
     .then(({ action }) => {
       if (action === "POST") {
         postItemForAuction();
-      } else if(action === "BID"){
+      } else if (action === "BID") {
         bidOnItem();
       } else {
         exit();
