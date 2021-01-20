@@ -52,8 +52,15 @@ function bidOnItem() {
   connection.query("SELECT * FROM auctions", (err, data) => {
     if (err) throw err;
     const arrayOfItems = data.map((item) => {
-      return { item: item.item, value: item.id };
+      return { name: item.item, value: item.id };
     });
+    // const arrayOfItems = [];
+    // for (let i = 0; i < data.length; i++) {
+    //   const newObject = {};
+    //   newObject.name = data[i].item;
+    //   newObject.value = data[i].id;
+    //   arrayOfItems.push(newObject);
+    // }
     inquirer
       .prompt([
         {
